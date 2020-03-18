@@ -3,6 +3,8 @@ import traceback
 import re
 import threading
 
+from datetime import datetime as dt
+
 import pynmea2
 
 message = ""
@@ -11,8 +13,8 @@ class ShareGPS():
 
     def __init__(self):
 
-        self.host = '0.0.0.0'
-        self.port = 5555
+        self.host = '192.168.0.11'
+        self.port = 5000
 
         #Flag de parada para o server
         self.flag = True
@@ -41,7 +43,12 @@ class ShareGPS():
 
             #faz o parse da mensagem para o protocolo nmea
             self.parse = pynmea2.parse(self.message[0])
-            print(self._regex(self.parse.lat), self._regex(self.parse.lon))
+            try:
+                print(dt.now().strftime("%d/%m/%Y, %H:%M:%S"),";",
+                self._regex(self.parse.lat),";",
+                self._regex(self.parse.lon))
+            except:
+                pass
             
             
 
