@@ -1,19 +1,14 @@
 import socket
-import traceback
 import re
-import threading
-
 from datetime import datetime as dt
 
 import pynmea2
-
-message = ""
 
 class ShareGPS():
 
     def __init__(self):
 
-        self.host = '192.168.0.11'
+        self.host = '0.0.0.0'
         self.port = 5000
 
         #Flag de parada para o server
@@ -29,53 +24,37 @@ class ShareGPS():
          
 
     
-    def _listen(self):
+    def listen(self):
 
-        global message
+
         print("Iniciando Server UDP/IP no IP {}:{}".format(self.host, self.port))
         self.server.bind((self.host, self.port))
 
+        print("Timestamp; latitude; longitude")
         #Mantem o servidor ativo até mudar a Flag de parada
         while self.flag:
 
             self.message, self.addr = self.server.recvfrom(8192)
             self.message = self.message.decode('utf-8').split('\n')
-
+            self.timestamp = dt.now().strftime("%d/%m/%Y, %H:%M:%S")
             #faz o parse da mensagem para o protocolo nmea
+
             self.parse = pynmea2.parse(self.message[0])
+
             try:
-                print(dt.now().strftime("%d/%m/%Y, %H:%M:%S"),";",
-                self._regex(self.parse.lat),";",
-                self._regex(self.parse.lon))
+                
+                self.latitude = round(self.parse.latitude, 6)
+                self.longitude = round(self.parse.longitude, 6)
+                print("{}; {}; {}".format(self.timestamp, self.latitude, 
+                                          self.longitude))
+
             except:
                 pass
-            
-            
-
-    def run(self):
-
-        threading.Thread(target=self._listen())
-
-
-    def _regex(self, string):
-
-        self.phrase = str(string)
-        self.matches = re.finditer(self.regex_sentence, self.phrase, re.MULTILINE)
-
-        for match in self.matches:
-
-            self.degrees = match.group(1)
-            self.minutes = match.group(2)
-
-            self.minutes = float(self.minutes)/60
-            
-            self.coord = int(self.degrees) + self.minutes
-
-            return round(self.coord*(-1), 7)
+        
 
         
 
 if __name__ == "__main__":
 
         gps = ShareGPS()
-        gps.run()
+        gps.listen()
